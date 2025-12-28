@@ -1,0 +1,16 @@
+# Build output
+build/
+*.bin
+*.rom
+*.a26
+*.lst
+*.sym
+*.map
+
+# Editor / OS noise
+.DS_Store
+*.swp
+*.swo
+.vscode/
+.idea/
+
