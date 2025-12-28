@@ -12,7 +12,7 @@ Start:
     ldx #$FF
     txs
 
-    lda #$2C        ; blue
+    lda #$2C        ; yellow
     sta COLUBK
 
 Loop:
