@@ -2,9 +2,9 @@
 # -------------------
 
 ASM      = dasm
-SRC      = src/solid_color.asm
-OUT      = build/solid_color.bin
-INCLUDES = -Iinclude
+SRC      = src/main.asm
+OUT      = build/checkers.bin
+INCLUDES = -Iinclude -Isrc
 FLAGS    = -f3
 
 # Default target
