@@ -56,11 +56,11 @@ MainLoop:
     sta CTRLPF          ; asymmetric playfield (no mirror)
 
     ; preload PF for first visible row
-    lda #%00010000
+    lda #%00000000
     sta PF0
-    lda #%00111110
+    lda #%01111100
     sta PF1
-    lda #%11110000
+    lda #%11111000
     sta PF2
 ; -------------------------------------------------
 
