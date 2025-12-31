@@ -4,7 +4,7 @@
 ; -------------------------------------------------
 
     include "vcs.h"
-
+    include "macro.h"
 ; -------------------------------------------------
 ; DrawKernel
 ; Called once per frame during visible scanlines
@@ -16,29 +16,18 @@ DrawKernel:
     ldy #8              ; 8 checkerboard rows
 
 RowLoop:
-    sta WSYNC    ;align to start of scanline before PF writes
-    ; -----------------------------
-    ; Pattern A: dark-light-dark-light
-    ; -----------------------------
+    sta WSYNC
+    ;--------Pattern A--------
 
-    ; Cursor visible only on row 4 (24 scanlines tall)
-    cpy #4
-    ;bne CursorOffRow  -newly disabled
-    beq CursorOnRow ;newly added
-    cpy #3          ;newly added
-    beq CursorOnRow ;newly added
-
-CursorOffRow:
     lda #0
     sta GRP0
-    jmp CursorRowSet
-
-CursorOnRow:
+    cpy CursorYcmp
+    bne .cursorDoneA
     lda CursorBitmap
     sta GRP0
-    ;jmp CursorRowSet -newly disabled
+.cursorDoneA:
 
-CursorRowSet:
+
     lda #%00000000
     sta PF0
     lda #%01111100
@@ -55,9 +44,16 @@ RowALines:
     dey
     beq DoneKernel
 
-    ; -----------------------------
-    ; Pattern B: light-dark-light-dark
-    ; -----------------------------
+    ;--------Pattern B--------
+    lda #0
+    sta GRP0
+    cpy CursorYcmp
+    bne .cursorDoneB
+    lda CursorBitmap
+    sta GRP0
+
+.cursorDoneB:
+
     lda #%11110000
     sta PF0
     lda #%10000011
@@ -78,4 +74,4 @@ DoneKernel:
     rts
 
 CursorBitmap:
-    .byte %00111100
+    .byte %11110000

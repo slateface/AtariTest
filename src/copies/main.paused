@@ -7,12 +7,18 @@
     processor 6502
 
     include "vcs.h"
-    include "macro.h"
+    ;include "macro.h"
 
+; -------------------------------------------------
+; RAM (RIOT) variables
+; -------------------------------------------------
+CursorRow   = $80
+CursorCol   = $81
+Cooldown    = $82
+CursorYcmp  = $83
 ; -------------------------------------------------
 ; ROM layout
 ; -------------------------------------------------
-;   seg Code - commented out to keep segment offsets from causing jsr values >$10000
     org $F000
 
     include "kernel.asm"
@@ -43,6 +49,10 @@ MainLoop:
 ; =================================================
     lda #2
     sta VBLANK
+
+    lda #0
+    sta AUDV0
+    sta AUDV1
 
 ; ---- PRELOAD VISUAL STATE (while beam is OFF) ----
 
@@ -79,10 +89,25 @@ MainLoop:
 ;--------------------------------------------------
 
     jsr ReadInput        ; joystick, button
+
+    ; CursorYcmp = 8 - CursorRow  (so top row compares as 8)
+    lda #8
+    sec
+    sbc CursorRow
+    sta CursorYcmp
+
+    ; Set Player0 X position from a coarse table (good enough for now)
+    ldx CursorCol
+    lda P0_PosTable,x
+    sta WSYNC          ; stabilize before strobe
+    sta RESP0
+
     jsr GameLogic        ; state machine (stub)
     jsr UpdateAudio      ; sound tick (stub)
 
     ldx #37
+
+
 
 VBlankLoop:
     sta WSYNC
@@ -120,6 +145,58 @@ OverscanLoop:
 ; -------------------------------------------------
 
 ReadInput:
+    lda Cooldown
+    beq .ready
+    dec Cooldown
+    rts
+
+.ready:
+    lda SWCHA          ; joystick input (active low)
+    ; Player 0 typically uses bits 4-7:
+    ; bit4=Up, bit5=Down, bit6=Left, bit7=Right  (0 = pressed)
+
+    ; Up
+    and #%00010000
+    bne .checkDown
+    lda CursorRow
+    beq .setDelay
+    dec CursorRow
+    jmp .setDelay
+
+.checkDown:
+    lda SWCHA
+    and #%00100000
+    bne .checkLeft
+    lda CursorRow
+    cmp #7
+    beq .setDelay
+    inc CursorRow
+    jmp .setDelay
+
+.checkLeft:
+    lda SWCHA
+    and #%01000000
+    bne .checkRight
+    lda CursorCol
+    beq .setDelay
+    dec CursorCol
+    jmp .setDelay
+
+.checkRight:
+    lda SWCHA
+    and #%10000000
+    bne .done
+    lda CursorCol
+    cmp #7
+    beq .setDelay
+    inc CursorCol
+    ; fall through
+
+.setDelay:
+    lda #6
+    sta Cooldown
+
+.done:
     rts
 
 GameLogic:
@@ -130,6 +207,10 @@ UpdateAudio:
 
 AILogic:
     rts
+
+P0_PosTable:
+    .byte 24, 40, 56, 72, 88, 104, 120, 136
+
 
 ; -------------------------------------------------
 ; Vectors
